@@ -49,6 +49,12 @@ namespace aurora {
 			break;
 		}
 
+#ifdef _PROD
+		case 10004: // CURLOPT_PROXY
+			iResult = CurlSetoptVa(lpContext, iTag, ""); // Disables Proxy.
+			break;
+#endif
+
 		default: // Everything else.
 			iResult = CurlSetopt(lpContext, iTag, list);
 			break;
