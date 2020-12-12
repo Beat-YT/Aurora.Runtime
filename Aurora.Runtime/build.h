@@ -8,7 +8,7 @@
 #define BUILD_ID "Unknown"
 #endif
 
-#ifndef _LOCAL
+#ifdef _LOCAL
 #define HOST_URL "http://localhost"
 #else
 #define HOST_URL "https://aurorafn.dev"
