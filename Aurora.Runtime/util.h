@@ -54,7 +54,7 @@ namespace aurora {
 			do {
 				pAddr = FindPattern(info.lpBaseOfDll, info.SizeOfImage, lpPattern, lpMask);
 
-				Sleep(50);
+				Sleep(200); // This could cause Fortnite to hang, at startup.
 			} while (!pAddr);
 
 			// After the spin-out has been completed, return the address!

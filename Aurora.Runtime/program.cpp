@@ -6,9 +6,9 @@ namespace aurora {
 	Program::Program() {
 		Util::InitConsole();
 
-		printf("Aurora.Runtime (%s) by Cyuubi.\n", BUILD_NAME);
-#ifdef AURORA
-		printf("Aurora by Slushia and others.\n");
+		printf("Aurora.Runtime (%s) by Cyuubi.\n", BUILD_ID);
+#ifdef _PROD
+		printf("Aurora by Slushia, darkblade and irma.\n");
 #endif
 		printf("Built on: %s at %s\n", __DATE__, __TIME__);
 

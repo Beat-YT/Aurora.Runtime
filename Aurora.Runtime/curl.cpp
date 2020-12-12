@@ -36,8 +36,8 @@ namespace aurora {
 			break;
 
 		// Fuck you C++, I hate you.
-		//case 10002: // CURLOPT_URL
-		/*{
+		case 10002: // CURLOPT_URL
+		{
 			std::string sUrl(va_arg(copy, PCHAR));
 
 			// Check if the URLs host is EpicGames.
@@ -47,7 +47,7 @@ namespace aurora {
 
 			iResult = CurlSetoptVa(lpContext, iTag, sUrl.c_str());
 			break;
-		}*/
+		}
 
 		default: // Everything else.
 			iResult = CurlSetopt(lpContext, iTag, list);

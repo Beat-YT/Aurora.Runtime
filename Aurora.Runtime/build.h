@@ -1,15 +1,14 @@
 #pragma once
 
 #ifdef _LOCAL
-#define BUILD_NAME "Local"
+#define BUILD_ID "Local"
 #elif _PROD
-#define BUILD_NAME "Prod"
+#define BUILD_ID "Prod"
 #else
-#define BUILD_NAME "Unknown"
+#define BUILD_ID "Unknown"
 #endif
 
-//#define AURORA
-#ifndef AURORA
+#ifndef _LOCAL
 #define HOST_URL "http://localhost"
 #else
 #define HOST_URL "https://aurorafn.dev"
