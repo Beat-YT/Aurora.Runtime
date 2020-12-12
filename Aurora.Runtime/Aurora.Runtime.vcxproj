@@ -74,6 +74,9 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableUAC>false</EnableUAC>
     </Link>
+    <PostBuildEvent>
+      <Command>xcopy "$(TargetPath)" "$(SolutionDir)Build\" /F /I /R /Y</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release [Prod]|x64'">
     <ClCompile>
@@ -96,6 +99,10 @@
       <EnableUAC>false</EnableUAC>
       <AdditionalOptions>/PDBALTPATH:%_PDB% %(AdditionalOptions)</AdditionalOptions>
     </Link>
+    <PostBuildEvent>
+      <Command>"$(SolutionDir)Tools\upx.exe" --brute "$(TargetPath)"
+xcopy "$(TargetPath)" "$(SolutionDir)Build\" /F /I /R /Y</Command>
+    </PostBuildEvent>
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="curl.cpp" />
