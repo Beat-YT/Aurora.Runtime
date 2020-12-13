@@ -11,5 +11,5 @@
 #ifdef _DEV
 #define HOST_URL "http://localhost"
 #else
-#define HOST_URL "https://aurorafn.dev"
+#define HOST_URL "https://api.aurorafn.dev"
 #endif
