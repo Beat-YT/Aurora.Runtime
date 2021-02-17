@@ -2,18 +2,13 @@
 
 #include "hook.h"
 
-namespace aurora
-{
-	class Curl
-	{
+namespace aurora {
+	class Curl {
+	private:
+		Hook* m_pCurlEasySetoptHook;
+
 	public:
 		Curl();
 		~Curl();
-
-		uintptr_t m_pCurlVsetoptAddress;
-
-		Hook* m_pCurlVsetoptHook;
 	};
 }
-
-extern aurora::Curl* g_pCurl;

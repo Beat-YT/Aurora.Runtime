@@ -2,10 +2,8 @@
 
 #include "curl.h"
 
-namespace aurora
-{
-	class Program
-	{
+namespace aurora {
+	class Program {
 	private:
 		Curl* m_pCurl;
 

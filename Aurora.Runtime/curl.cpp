@@ -5,93 +5,99 @@
 #include <string>
 #include <regex>
 
-#include <minhook.h>
-#pragma comment(lib, "libMinHook.x64.lib")
+namespace aurora {
+	const std::regex rEpicGames("https:\\/\\/(.*)\\.ol\\.epicgames.com");
 
-aurora::Curl* g_pCurl;
-
-namespace aurora
-{
-	INT (*CurlVsetopt_)(LPVOID, INT, va_list) = NULL;
-	INT CurlVsetoptHook(LPVOID lpContext, INT iOption, va_list param); // Forward declaring this is necessary!! 
-	INT CurlVsetopt(LPVOID lpContext, INT iOption, va_list param)
-	{
-		g_pCurl->m_pCurlVsetoptHook->~Hook();
-
-		INT iResult = CurlVsetopt_(lpContext, iOption, param);
-
-		g_pCurl->m_pCurlVsetoptHook = new Hook(g_pCurl->m_pCurlVsetoptAddress, reinterpret_cast<uintptr_t>(CurlVsetoptHook));
-		if (!g_pCurl->m_pCurlVsetoptHook->bSuccess)
-		{
-			printf("Reinstalling hook for CurlVsetopt has failed, exiting immediately!\n");
-			exit(EXIT_FAILURE);
-		}
-
-		return iResult;
-	}
-	INT CurlVsetoptVa(LPVOID lpContext, INT iOption, ...)
-	{
+	INT (*CurlSetopt)(LPVOID, INT, va_list) = NULL;
+	INT CurlSetoptVa(LPVOID lpContext, INT iOption, ...) {
 		va_list list{};
 		va_start(list, iOption);
 
-		INT iResult = CurlVsetopt(lpContext, iOption, list);
+		INT iResult = CurlSetopt(lpContext, iOption, list);
 
 		va_end(list);
 
 		return iResult;
 	}
-	INT CurlVsetoptHook(LPVOID lpContext, INT iOption, va_list param)
-	{
-		va_list copy{}; // Copy only exists for our tag overrides.
-		va_copy(copy, param);
+
+	INT CurlEasySetopt(LPVOID lpContext, INT iTag, ...) {
+		if (!lpContext) {
+			return 43; // CURLE_BAD_FUNCTION_ARGUMENT
+		}
+
+		va_list list{}, copy{}; // Copy only exists for our tag overrides.
+		va_start(list, iTag);
+		va_copy(copy, list);
 
 		INT iResult = 0;
+		switch (iTag) {
+		case 64: // CURLOPT_SSL_VERIFYPEER
+			iResult = CurlSetoptVa(lpContext, iTag, FALSE); // Disables VerifyPeer.
+			break;
 
-		switch (iOption)
+		// Fuck you C++, I hate you.
+		case 10002: // CURLOPT_URL
 		{
-			case 64: // CURLOPT_SSL_VERIFYPEER
-				iResult = CurlVsetoptVa(lpContext, iOption, FALSE); // Disables VerifyPeer.
-				break;
+			std::string sUrl(va_arg(copy, PCHAR));
 
-			default: // Everything else.
-				iResult = CurlVsetopt(lpContext, iOption, param);
-				break;
+			// Check if the URLs host is EpicGames.
+			if (std::regex_search(sUrl, rEpicGames)) {
+				sUrl = std::regex_replace(sUrl, rEpicGames, HOST_URL);
+			}
+
+			iResult = CurlSetoptVa(lpContext, iTag, sUrl.c_str());
+			break;
+		}
+
+#ifdef _PROD
+		case 10004: // CURLOPT_PROXY
+			iResult = CurlSetoptVa(lpContext, iTag, ""); // Disables Proxy.
+			break;
+#endif
+
+		default: // Everything else.
+			iResult = CurlSetopt(lpContext, iTag, list);
+			break;
 		}
 
 		va_end(copy);
+		va_end(list);
 
 		return iResult;
 	}
 
-	Curl::Curl()
-	{
-		g_pCurl = this;
-
-		m_pCurlVsetoptAddress = reinterpret_cast<uintptr_t>(Util::FindPattern
+	Curl::Curl() {
+		auto pCurlSetoptAddress = Util::FindPattern
 		(
-			"\x48\x89\x5C\x24\x08\x48\x89\x6C\x24\x10\x48\x89\x74\x24\x18\x48\x89\x7C\x24\x20\x41\x56\x48\x83\xEC\x40\x33\xED\x49\x8B\xF0\x44",
-			"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-		));
-		if (!m_pCurlVsetoptAddress)
-		{
-			printf("Finding pattern for CurlVsetopt has failed, exiting immediately!\n");
+			"\x48\x89\x5C\x24\x08\x48\x89\x6C\x24\x10\x48\x89\x74\x24\x18\x57\x48\x83\xEC\x30\x33\xED\x49\x8B\xF0\x48\x8B\xD9",
+			"xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+		);
+		if (!pCurlSetoptAddress) {
+			printf("Finding pattern for CurlSetopt has failed, exiting immediately!\n");
 			exit(EXIT_FAILURE);
 		}
 
-		CurlVsetopt_ = reinterpret_cast<decltype(CurlVsetopt_)>(m_pCurlVsetoptAddress);
+		CurlSetopt = reinterpret_cast<decltype(CurlSetopt)>(pCurlSetoptAddress);
 
-		m_pCurlVsetoptHook = new Hook(m_pCurlVsetoptAddress, reinterpret_cast<uintptr_t>(CurlVsetoptHook));
-		if (!m_pCurlVsetoptHook->bSuccess)
-		{
-			printf("Initializing hook for CurlVsetopt has failed, exiting immediately!\n");
+		auto pCurlEasySetoptAddress = Util::FindPattern
+		(
+			"\x89\x54\x24\x10\x4C\x89\x44\x24\x18\x4C\x89\x4C\x24\x20\x48\x83\xEC\x28\x48\x85\xC9\x75\x08\x8D\x41\x2B\x48\x83\xC4\x28\xC3\x4C",
+			"xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+		);
+		if (!pCurlEasySetoptAddress) {
+			printf("Finding pattern for CurlEasySetopt has failed, exiting immediately!\n");
+			exit(EXIT_FAILURE);
+		}
+
+		m_pCurlEasySetoptHook = new Hook(reinterpret_cast<uintptr_t>(pCurlEasySetoptAddress), reinterpret_cast<uintptr_t>(CurlEasySetopt));
+		if (!m_pCurlEasySetoptHook->bSuccess) {
+			printf("Initializing hook for CurlEasySetopt has failed, exiting immediately!\n");
 			exit(EXIT_FAILURE);
 		}
 	}
-	Curl::~Curl()
-	{
-		if (m_pCurlVsetoptHook)
-		{
-			delete m_pCurlVsetoptHook;
+	Curl::~Curl() {
+		if (m_pCurlEasySetoptHook) {
+			delete m_pCurlEasySetoptHook;
 		}
 	}
 }

@@ -2,18 +2,15 @@
 
 #define XIP Rip
 
-namespace aurora
-{
+namespace aurora {
 	uintptr_t Hook::m_pTarget = 0;
 	uintptr_t Hook::m_pDetour = 0;
 
-	Hook::Hook(uintptr_t pTarget, uintptr_t pDetour)
-	{
+	Hook::Hook(uintptr_t pTarget, uintptr_t pDetour) {
 		Hook::m_pTarget = pTarget;
 		Hook::m_pDetour = pDetour;
 
-		if (!IsSamePage(reinterpret_cast<const PBYTE>(pTarget), reinterpret_cast<const PBYTE>(pDetour)))
-		{
+		if (!IsSamePage(reinterpret_cast<const PBYTE>(pTarget), reinterpret_cast<const PBYTE>(pDetour))) {
 			m_hHandle = AddVectoredExceptionHandler(true, static_cast<PVECTORED_EXCEPTION_HANDLER>(Handler));
 
 			if (m_hHandle &&
@@ -41,17 +38,14 @@ namespace aurora
 		MEMORY_BASIC_INFORMATION mbiFirst{}, mbiSecond{};
 
 		// Query both the first and second address.
-		if (!VirtualQuery(pFirstAddr, &mbiFirst, sizeof(mbiFirst)))
-		{
+		if (!VirtualQuery(pFirstAddr, &mbiFirst, sizeof(mbiFirst))) {
 			return true;
 		}
-		if (!VirtualQuery(pSecondAddr, &mbiSecond, sizeof(mbiSecond)))
-		{
+		if (!VirtualQuery(pSecondAddr, &mbiSecond, sizeof(mbiSecond))) {
 			return true;
 		}
 
-		if (mbiFirst.BaseAddress == mbiSecond.BaseAddress)
-		{
+		if (mbiFirst.BaseAddress == mbiSecond.BaseAddress) {
 			return true;
 		}
 
@@ -62,8 +56,7 @@ namespace aurora
 	{
 		DWORD dwOldProtect;
 
-		switch (pException->ExceptionRecord->ExceptionCode)
-		{
+		switch (pException->ExceptionRecord->ExceptionCode) {
 		case STATUS_GUARD_PAGE_VIOLATION:
 			if (pException->ContextRecord->XIP == m_pTarget) {
 				pException->ContextRecord->XIP = m_pDetour;

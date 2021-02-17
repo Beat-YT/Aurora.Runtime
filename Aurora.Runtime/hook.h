@@ -2,10 +2,8 @@
 
 #include <windows.h>
 
-namespace aurora
-{
-	class Hook
-	{
+namespace aurora {
+	class Hook {
 	private:
 		static uintptr_t m_pTarget;
 		static uintptr_t m_pDetour;
